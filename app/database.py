@@ -17,7 +17,7 @@ class URLMap(Base):
     """
     __tablename__ = "url_map"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    url: Mapped[str] = mapped_column(String, unique=True, index=True)
+    url: Mapped[str] = mapped_column(String, index=True)
     slug: Mapped[str] = mapped_column(String, unique=True, index=True)
     # Automatically set when the record is created
     created_at: Mapped[datetime] = mapped_column(
@@ -69,8 +69,8 @@ class DB:
             result = await session.execute(stmt)
             return result.scalar_one_or_none()
 
-    async def get_url_map_for_url(self, url: str) -> URLMap:
+    async def get_url_maps_for_url(self, url: str) -> list[URLMap]:
         async with self.async_session() as session:
             stmt = select(URLMap).where(URLMap.url == url)
             result = await session.execute(stmt)
-            return result.scalar_one_or_none()
+            return list(result.scalars().all())

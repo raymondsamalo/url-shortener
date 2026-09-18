@@ -38,8 +38,15 @@ class UrlMapCreateRequest(BaseModel):
     """Schema for creating a shortened URL entry."""
 
     original_url: AnyHttpUrl = Field(alias="url")
-    slug: ShortUrlPath | None = Field(default=None)
+    slug: ShortUrlPath 
 
-class UrlMapCreateResponse(UrlMapCreateRequest):
+class UrlMapCreateRequestNoSlug(BaseModel):
+    """Schema for creating a shortened URL entry."""
+
+    original_url: AnyHttpUrl = Field(alias="url")
+
+class UrlMapCreateResponse(BaseModel):
     """ schema UrlCreateResponse    """
+    url:str
+    slug: str|None = Field(default=None)
     detail: str

@@ -1,1 +1,1 @@
-from app.schemas.url import UrlMapCreateRequest, UrlMapCreateResponse
+from app.schemas.url import UrlMapCreateRequest, UrlMapCreateResponse, UrlMapCreateRequestNoSlug

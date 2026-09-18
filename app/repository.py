@@ -11,8 +11,8 @@ class URLMapRepository(ABC):
         """ get url string  from slug or None if it is not in repository"""
 
     @abstractmethod
-    async def get_slug_from_url(self, url: str) -> str | None:
-        """ get slug  from url or None if it is not in repository"""
+    async def get_slugs_from_url(self, url: str) -> set[str]:
+        """ get slugs  from url """
 
     @abstractmethod
     async def store_url_and_slug(self, slug: str, url: str):
@@ -36,12 +36,14 @@ class InMemoryURLMapRepository(URLMapRepository):
     async def get_url_from_slug(self, slug: str) -> str | None:
         return self.slug_dict.get(slug, None)
 
-    async def get_slug_from_url(self, url: str) -> str | None:
-        return self.url_dict.get(url, None)
+    async def get_slugs_from_url(self, url: str) -> set[str]:
+        return self.url_dict.get(url, set())
 
     async def store_url_and_slug(self, slug: str, url: str):
         self.slug_dict[slug] = url
-        self.url_dict[url] = slug
+        slugs=self.url_dict.get(url, set())
+        slugs.add(slug)
+        self.url_dict[url] = slugs
 
     async def init_repo(self):
         pass
@@ -49,12 +51,12 @@ class InMemoryURLMapRepository(URLMapRepository):
 
 
 class DatabaseURlMapRepository(URLMapRepository):
-    def __init__(self) -> None:
+    def __init__(self, db_path) -> None:
         super().__init__()
-        base_dir = Path(__file__).resolve().parent
-        db_path = base_dir / "database.db"
-        print(db_path.as_posix())
-        db_url = f"sqlite+aiosqlite:////{db_path.as_posix()}"
+        if db_path:
+            db_url = f"sqlite+aiosqlite:////{db_path.as_posix()}"
+        else:
+            db_url= f"sqlite+aiosqlite://" # memory based
         self.db = DB(db_url)
 
     async def get_url_from_slug(self, slug: str) -> str | None:
@@ -63,11 +65,9 @@ class DatabaseURlMapRepository(URLMapRepository):
             return None
         return url_map.url
 
-    async def get_slug_from_url(self, url: str) -> str | None:
-        url_map = await self.db.get_url_map_for_url(url=url)
-        if url_map is None:
-            return None
-        return url_map.url
+    async def get_slugs_from_url(self, url: str) -> set[str]:
+        url_maps = await self.db.get_url_maps_for_url(url=url)
+        return {url_map.slug for url_map in url_maps}
 
     async def store_url_and_slug(self, slug: str, url: str):
         await self.db.add_url_map(url=url, slug=slug)
@@ -77,4 +77,3 @@ class DatabaseURlMapRepository(URLMapRepository):
 
 
 #TOODO: allow this to be configurable
-repo = DatabaseURlMapRepository()
