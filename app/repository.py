@@ -22,6 +22,11 @@ class URLMapRepository(ABC):
     async def init_repo(self):
         """ handler for initialization"""
 
+    @abstractmethod
+    async def list_all(self, slug: str|None=None, url: str|None =None) -> list[dict]:
+        """ list all """
+
+
 
 class InMemoryURLMapRepository(URLMapRepository):
     """
@@ -48,6 +53,9 @@ class InMemoryURLMapRepository(URLMapRepository):
     async def init_repo(self):
         pass
 
+    async def list_all(self, slug: str|None=None, url: str|None =None)  -> list[dict]:
+        return [{"slug":slug, "url":url, "id":"", "created":"" } for slug, url in self.slug_dict.items()]
+
 
 
 class DatabaseURlMapRepository(URLMapRepository):
@@ -71,6 +79,10 @@ class DatabaseURlMapRepository(URLMapRepository):
 
     async def store_url_and_slug(self, slug: str, url: str):
         await self.db.add_url_map(url=url, slug=slug)
+
+    async def list_all(self, slug: str|None=None, url: str|None =None) -> list[dict]:
+        results=await self.db.list_url_maps(url=url, slug=slug)
+        return [{"slug":result.slug, "url":result.url, "id":result.id, "created":result.created_at } for result in results]
 
     async def init_repo(self):
         await self.db.init_models()

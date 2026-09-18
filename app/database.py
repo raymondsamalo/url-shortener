@@ -74,3 +74,14 @@ class DB:
             stmt = select(URLMap).where(URLMap.url == url)
             result = await session.execute(stmt)
             return list(result.scalars().all())
+
+    async def list_url_maps(self, url: str|None, slug:str|None) -> list[URLMap]:
+        async with self.async_session() as session:
+            stmt = select(URLMap)
+            if url:
+                stmt = stmt.where(URLMap.url == url)
+            if slug:
+                stmt = stmt.where(URLMap.slug == slug)
+            stmt=stmt.order_by(URLMap.created_at)
+            result = await session.execute(stmt)
+            return list(result.scalars().all())
