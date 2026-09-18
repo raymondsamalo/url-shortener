@@ -59,6 +59,10 @@ async def redirect(slug: str):
     :param slug: Description
     :type slug: str
     """
+    # redirect to our ui
+    if slug=="ui":
+        return RedirectResponse(url="/ui/")
+
     existing_url = await repo.get_url_from_slug(slug=slug)
     if existing_url is None:
         raise HTTPException(status_code=404, detail=f"Not found {slug}")

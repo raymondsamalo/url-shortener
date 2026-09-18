@@ -54,7 +54,7 @@ class DatabaseURlMapRepository(URLMapRepository):
     def __init__(self, db_path) -> None:
         super().__init__()
         if db_path:
-            db_url = f"sqlite+aiosqlite:////{db_path.as_posix()}"
+            db_url = f"sqlite+aiosqlite:////{db_path}"
         else:
             db_url= f"sqlite+aiosqlite://" # memory based
         self.db = DB(db_url)
