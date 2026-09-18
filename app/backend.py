@@ -11,7 +11,7 @@ router = APIRouter()
 slug_dict = {}
 url_dict = {}
 
-reserved_slug = ["docs","ui"]
+reserved_slug = ["docs","ui", "map","auto_map"]
 
 @router.post("/map", response_model=UrlMapCreateResponse, summary="Create new url to slug map")
 async def create_new_alias(req: UrlMapCreateRequest) -> UrlMapCreateResponse:
@@ -20,6 +20,9 @@ async def create_new_alias(req: UrlMapCreateRequest) -> UrlMapCreateResponse:
     """
     url = str(req.original_url)
     slug = str(req.slug)
+    if slug in reserved_slug:
+        raise HTTPException(
+            status_code=400, detail=f"slug {slug} is reserved and cannot be used to map url")
     existing_url =  await repo.get_url_from_slug(slug)
     if existing_url is None:
         # no existing url
@@ -49,7 +52,7 @@ async def create_new_alias_automatically(req: UrlMapCreateRequestNoSlug) -> UrlM
         
 
 
-@router.get("/map/{slug}")
+@router.get("/{slug}")
 async def redirect(slug: str):
     """
     redirect upon request to access slug if slug exist in our storage
