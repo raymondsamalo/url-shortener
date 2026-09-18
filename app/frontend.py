@@ -5,7 +5,7 @@ from app.dependencies import repo
 async def main_page():
     columns = [
  #       {"name": "id", "label": "ID", "field": "id"},
-        {"name": "slug", "label": "Slug", "field": "slug"},
+        {"name": "link", "label": "link", "field": "link"},
         {"name": "url", "label": "URL", "field": "url"},
         {"name": "created", "label": "created", "field": "created"},
     ]
@@ -25,6 +25,7 @@ async def main_page():
         ui.space()
         ui.button(icon="sync", on_click=refresh_data).classes('q-mt-md').props('flat dense color=white')
         ui.button(icon="add", on_click=refresh_data).classes('q-mt-md').props('flat dense color=white')
+        ui.button(icon="settings", on_click=lambda: ui.navigate.to('../docs')).classes('q-mt-md').props('flat dense color=white')
 
 
 

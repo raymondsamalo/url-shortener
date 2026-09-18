@@ -13,12 +13,12 @@ Base = declarative_base()
 
 class URLMap(Base):
     """
-    Map url to slug
+    Map url to link
     """
     __tablename__ = "url_map"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     url: Mapped[str] = mapped_column(String, index=True)
-    slug: Mapped[str] = mapped_column(String, unique=True, index=True)
+    link: Mapped[str] = mapped_column(String, unique=True, index=True)
     # Automatically set when the record is created
     created_at: Mapped[datetime] = mapped_column(
         DateTime(), server_default=func.now()
@@ -50,22 +50,22 @@ class DB:
     def async_session(self):
         return self._session_maker()
 
-    async def add_url_map(self, url: str, slug: str) -> URLMap:
+    async def add_url_map(self, url: str, link: str) -> URLMap:
         async with self.async_session() as session:
-            stmt = insert(URLMap).values(url=url, slug=slug).returning(URLMap)
+            stmt = insert(URLMap).values(url=url, link=link).returning(URLMap)
             try:
                 result = await session.execute(stmt)
                 await session.commit()
             except IntegrityError:
                 logger.error("Failed to insert %s -> %s ",
-                             url, slug, exc_info=1)
+                             url, link, exc_info=1)
                 await session.rollback()
                 raise
             return result.scalar_one()
 
-    async def get_url_map_for_slug(self, slug: str) -> URLMap:
+    async def get_url_map_for_link(self, link: str) -> URLMap:
         async with self.async_session() as session:
-            stmt = select(URLMap).where(URLMap.slug == slug)
+            stmt = select(URLMap).where(URLMap.link == link)
             result = await session.execute(stmt)
             return result.scalar_one_or_none()
 
@@ -75,13 +75,13 @@ class DB:
             result = await session.execute(stmt)
             return list(result.scalars().all())
 
-    async def list_url_maps(self, url: str|None, slug:str|None) -> list[URLMap]:
+    async def list_url_maps(self, url: str|None, link:str|None) -> list[URLMap]:
         async with self.async_session() as session:
             stmt = select(URLMap)
             if url:
                 stmt = stmt.where(URLMap.url == url)
-            if slug:
-                stmt = stmt.where(URLMap.slug == slug)
+            if link:
+                stmt = stmt.where(URLMap.link == link)
             stmt=stmt.order_by(URLMap.created_at)
             result = await session.execute(stmt)
             return list(result.scalars().all())

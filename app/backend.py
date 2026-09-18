@@ -3,7 +3,7 @@ main backend for our app
 """
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
-from app.schemas import UrlMapCreateRequest, UrlMapCreateResponse, UrlMapCreateRequestNoSlug
+from app.schemas import UrlMapCreateRequest, UrlMapCreateResponse, UrlMapCreateRequestNoLink, LinkPath
 from app.dependencies import repo
 from app.util.slugify import slugify_md5_base62
 router = APIRouter()
@@ -11,59 +11,82 @@ router = APIRouter()
 slug_dict = {}
 url_dict = {}
 
-reserved_slug = ["docs","ui", "map","auto_map"]
+reserved_link = ["docs","ui", "map","auto_map"]
 
-@router.post("/map", response_model=UrlMapCreateResponse, summary="Create new url to slug map")
-async def create_new_alias(req: UrlMapCreateRequest) -> UrlMapCreateResponse:
+@router.delete("/", response_model=UrlMapCreateResponse, summary="Delete an url map")
+async def delete_alias(link: LinkPath) -> UrlMapCreateResponse:
     """
-    Map and store url to slug
+    Map and store url to link
     """
     url = str(req.original_url)
-    slug = str(req.slug)
-    if slug in reserved_slug:
+    link = str(req.link)
+    if link in reserved_link:
         raise HTTPException(
-            status_code=400, detail=f"slug {slug} is reserved and cannot be used to map url")
-    existing_url =  await repo.get_url_from_slug(slug)
+            status_code=400, detail=f"link {link} is reserved and cannot be used to map url")
+    existing_url =  await repo.get_url_from_link(link)
     if existing_url is None:
         # no existing url
-        await repo.store_url_and_slug(slug=slug, url=url)
-        return UrlMapCreateResponse(url=url, slug=slug, detail="mapped successfully")
+        await repo.store_url_and_link(link=link, url=url)
+        return UrlMapCreateResponse(url=url, link=link, detail="mapped successfully")
     if existing_url == url:
-        return UrlMapCreateResponse(url=url, slug=slug,detail=f"url already mapped to {slug}")
+        return UrlMapCreateResponse(url=url, link=link,detail=f"url already mapped to {link}")
     raise HTTPException(
-            status_code=400, detail=f"slug {slug} already exist with different url")
+            status_code=400, detail=f"link {link} already exist with different url")
 
-@router.post("/auto_map", response_model=UrlMapCreateResponse, summary="Create new url to automatically ")
-async def create_new_alias_automatically(req: UrlMapCreateRequestNoSlug) -> UrlMapCreateResponse:
+@router.post("/", response_model=UrlMapCreateResponse, summary="Create new url to link map")
+async def create_new_alias(req: UrlMapCreateRequest) -> UrlMapCreateResponse:
     """
-    Map and store url to slug
+    Map and store url to link
     """
     url = str(req.original_url)
-    # no slug is given,
-    # we need to find if slug already existed 
-    # if not existed then we need to create our own shortened url or slug
-    existing_slugs = await repo.get_slugs_from_url(url)
-    if existing_slugs:
-        return UrlMapCreateResponse(url=url, detail=f"url already mapped to existing slugs {existing_slugs}")
-    slug = slugify_md5_base62(url, length=20)
-    await repo.store_url_and_slug(slug=slug, url=url)
-    return UrlMapCreateResponse(url=url, slug=slug, detail="mapped successfully")
+    link = str(req.link)
+    if link in reserved_link:
+        raise HTTPException(
+            status_code=400, detail=f"link {link} is reserved and cannot be used to map url")
+    existing_url =  await repo.get_url_from_link(link)
+    if existing_url is None:
+        # no existing url
+        await repo.store_url_and_link(link=link, url=url)
+        return UrlMapCreateResponse(url=url, link=link, detail="mapped successfully")
+    if existing_url == url:
+        return UrlMapCreateResponse(url=url, link=link,detail=f"url already mapped to {link}")
+    raise HTTPException(
+            status_code=400, detail=f"link {link} already exist with different url")
+
+@router.post("/auto_map", response_model=UrlMapCreateResponse, summary="Create new url to automatically ")
+async def create_new_alias_automatically(req: UrlMapCreateRequestNoLink) -> UrlMapCreateResponse:
+    """
+    Map and store url to link
+    """
+    url = str(req.original_url)
+    # no link is given,
+    # we need to find if link already existed 
+    # if not existed then we need to create our own shortened url or link
+    existing_links = await repo.get_links_from_url(url)
+    if existing_links:
+        return UrlMapCreateResponse(url=url, detail=f"url already mapped to existing links {existing_links}")
+    link = slugify_md5_base62(url, length=20)
+    await repo.store_url_and_link(link=link, url=url)
+    return UrlMapCreateResponse(url=url, link=link, detail="mapped successfully")
     
         
+@router.get("/")
+async def redirect_root():
+    return RedirectResponse(url="/ui/")
 
 
-@router.get("/{slug}")
-async def redirect(slug: str):
+@router.get("/{link}")
+async def redirect(link: str):
     """
-    redirect upon request to access slug if slug exist in our storage
-    :param slug: Description
-    :type slug: str
+    redirect upon request to access link if link exist in our storage
+    :param link: Description
+    :type link: str
     """
     # redirect to our ui
-    if slug=="ui":
+    if link=="ui":
         return RedirectResponse(url="/ui/")
 
-    existing_url = await repo.get_url_from_slug(slug=slug)
+    existing_url = await repo.get_url_from_link(link=link)
     if existing_url is None:
-        raise HTTPException(status_code=404, detail=f"Not found {slug}")
+        raise HTTPException(status_code=404, detail=f"Not found {link}")
     return RedirectResponse(url=existing_url)

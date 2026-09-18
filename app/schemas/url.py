@@ -7,7 +7,7 @@ from pydantic import (
 
 # Regex to enforce alphanumeric characters, hyphens, and underscores only.
 # Change constraints (like length) as needed.
-SHORT_URL_PATH_REGEX = re.compile(r"^[a-zA-Z0-9\-_]{3,20}$")
+SHORT_LINK_PATH_REGEX = re.compile(r"^[a-zA-Z0-9\-_]{3,20}$")
 
 
 def remove_whitespace(v: str) -> str:
@@ -21,7 +21,7 @@ def remove_whitespace(v: str) -> str:
 
 def validate_short_path(v: str) -> str:
     """Validate that a short URL path matches the allowed format."""
-    if not SHORT_URL_PATH_REGEX.match(v):
+    if not SHORT_LINK_PATH_REGEX.match(v):
         raise ValueError(
             "Invalid short URL path. Must be 3-20 characters long and contain "
             "only alphanumeric characters, hyphens, or underscores."
@@ -30,7 +30,7 @@ def validate_short_path(v: str) -> str:
 
 
 # Reusable custom type type for your models
-ShortUrlPath = Annotated[str, BeforeValidator(
+LinkPath = Annotated[str, BeforeValidator(
     remove_whitespace), AfterValidator(validate_short_path)]
 
 
@@ -38,9 +38,9 @@ class UrlMapCreateRequest(BaseModel):
     """Schema for creating a shortened URL entry."""
 
     original_url: AnyHttpUrl = Field(alias="url")
-    slug: ShortUrlPath 
+    link: LinkPath 
 
-class UrlMapCreateRequestNoSlug(BaseModel):
+class UrlMapCreateRequestNoLink(BaseModel):
     """Schema for creating a shortened URL entry."""
 
     original_url: AnyHttpUrl = Field(alias="url")
@@ -48,5 +48,5 @@ class UrlMapCreateRequestNoSlug(BaseModel):
 class UrlMapCreateResponse(BaseModel):
     """ schema UrlCreateResponse    """
     url:str
-    slug: str|None = Field(default=None)
+    link: str|None = Field(default=None)
     detail: str
