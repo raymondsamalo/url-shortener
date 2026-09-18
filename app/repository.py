@@ -1,5 +1,6 @@
 
 from abc import ABC, abstractmethod
+from pathlib import Path
 from app.database import DB
 
 
@@ -48,8 +49,12 @@ class InMemoryURLMapRepository(URLMapRepository):
 
 
 class DatabaseURlMapRepository(URLMapRepository):
-    def __init__(self,  db_url) -> None:
+    def __init__(self) -> None:
         super().__init__()
+        base_dir = Path(__file__).resolve().parent
+        db_path = base_dir / "database.db"
+        print(db_path.as_posix())
+        db_url = f"sqlite+aiosqlite:////{db_path.as_posix()}"
         self.db = DB(db_url)
 
     async def get_url_from_slug(self, slug: str) -> str | None:
@@ -70,5 +75,6 @@ class DatabaseURlMapRepository(URLMapRepository):
     async def init_repo(self):
         await self.db.init_models()
 
+
 #TOODO: allow this to be configurable
-repo = DatabaseURlMapRepository("sqlite+aiosqlite:///database.db")
+repo = DatabaseURlMapRepository()

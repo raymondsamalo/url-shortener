@@ -1,4 +1,4 @@
-import asyncio
+import os
 from sqlite3 import IntegrityError
 import uuid
 from datetime import datetime
@@ -36,7 +36,7 @@ class DB:
     def __init__(self, database_url) -> None:
         self._url = database_url
         self._engine = create_async_engine(self._url,  connect_args={
-            "check_same_thread": False},  poolclass=StaticPool)
+            "check_same_thread": False},  poolclass=StaticPool, echo=True)
         self._session_maker = async_sessionmaker(
             autocommit=False, autoflush=False, bind=self._engine)
 
