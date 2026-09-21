@@ -4,7 +4,6 @@ from app.dependencies import repo
 # Initialize the NiceGUI router
 async def main_page():
     columns = [
- #       {"name": "id", "label": "ID", "field": "id"},
         {"name": "link", "label": "link", "field": "link"},
         {"name": "url", "label": "URL", "field": "url"},
         {"name": "created", "label": "created", "field": "created"},

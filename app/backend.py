@@ -3,7 +3,7 @@ main backend for our app
 """
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import RedirectResponse
-from app.schemas import UrlMapCreateRequest, UrlMapCreateResponse, UrlMapCreateRequestNoLink, LinkPath
+from app.schemas import UrlMapCreateRequest, UrlMapCreateResponse, LinkPath
 from app.dependencies import repo
 from app.util.slugify import slugify_md5_base62
 router = APIRouter()
@@ -53,25 +53,34 @@ async def create_new_alias(req: UrlMapCreateRequest) -> UrlMapCreateResponse:
     raise HTTPException(
             status_code=400, detail=f"link {link} already exist with different url")
 
-@router.post("/auto_map", response_model=UrlMapCreateResponse, summary="Create new url to automatically ")
-async def create_new_alias_automatically(req: UrlMapCreateRequestNoLink) -> UrlMapCreateResponse:
-    """
-    Map and store url to link
-    """
-    url = str(req.original_url)
-    # no link is given,
-    # we need to find if link already existed 
-    # if not existed then we need to create our own shortened url or link
-    existing_links = await repo.get_links_from_url(url)
-    if existing_links:
-        return UrlMapCreateResponse(url=url, detail=f"url already mapped to existing links {existing_links}")
-    link = slugify_md5_base62(url, length=20)
-    await repo.store_url_and_link(link=link, url=url)
-    return UrlMapCreateResponse(url=url, link=link, detail="mapped successfully")
+
+# """
+# This is not in requirements at least as far as I understand it
+# Hence let us comment it out for now
+# """
+# @router.post("/auto_map", response_model=UrlMapCreateResponse, summary="Create new url to automatically ")
+# async def create_new_alias_automatically(req: UrlMapCreateRequestNoLink) -> UrlMapCreateResponse:
+#     """
+#     Map and store url to link
+#     """
+#     url = str(req.original_url)
+#     # no link is given,
+#     # we need to find if link already existed 
+#     # if not existed then we need to create our own shortened url or link
+#     existing_links = await repo.get_links_from_url(url)
+#     if existing_links:
+#         return UrlMapCreateResponse(url=url, detail=f"url already mapped to existing links {existing_links}")
+#     link = slugify_md5_base62(url, length=20)
+#     await repo.store_url_and_link(link=link, url=url)
+#     return UrlMapCreateResponse(url=url, link=link, detail="mapped successfully")
     
         
 @router.get("/")
 async def redirect_root():
+    """
+    redirect root access to ui 
+    we put this here to take precendence above our /{link}
+    """
     return RedirectResponse(url="/ui/")
 
 
