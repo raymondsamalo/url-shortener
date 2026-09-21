@@ -1,28 +1,9 @@
-from contextlib import asynccontextmanager
-from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi import FastAPI
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import PlainTextResponse
+from nicegui import app as nicegui_app
 from nicegui import ui
-
+from contextlib import asynccontextmanager
 from app import backend, frontend
 from app.dependencies import repo
-
-
-app = FastAPI()
-
-
-@app.exception_handler(StarletteHTTPException)
-async def http_exception_handler(request, exc):
-    return PlainTextResponse(str(exc.detail), status_code=exc.status_code)
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request, exc: RequestValidationError):
-    message = "Validation errors:"
-    for error in exc.errors():
-        message += f"\nField: {error['loc']}, Error: {error['msg']}"
-    return PlainTextResponse(message, status_code=400)
 
 
 @asynccontextmanager
