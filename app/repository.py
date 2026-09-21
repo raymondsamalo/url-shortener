@@ -97,14 +97,14 @@ class InMemoryURLMapRepository(URLMapRepository):
             links=self.url_dict.get(old_url, set())
             links.discard(link)
             if links:
-                self.url_dict[url] = links
+                self.url_dict[old_url] = links
             else:
-                self.url_dict.pop(url, None)
+                self.url_dict.pop(old_url, None)
             # track link for new url
             links=self.url_dict.get(url, set())
             links.add(link)
             self.url_dict[url] = links
-
+ 
                 
 
 
