@@ -15,8 +15,12 @@ class URLMapRepository(ABC):
         """ get links  from url """
 
     @abstractmethod
-    async def store_url_and_link(self, link: str, url: str):
-        """ store url and link into repository"""
+    async def add_new_url_and_link(self, link: str, url: str):
+        """ store new url and link into repository"""
+
+    @abstractmethod
+    async def update_url_for_link(self, link: str, url: str):
+        """ update url for link"""
 
     @abstractmethod
     async def delete_link(self, link: str):
@@ -55,7 +59,7 @@ class InMemoryURLMapRepository(URLMapRepository):
             links = self.url_dict.get(url, set())
         return links
 
-    async def store_url_and_link(self, link: str, url: str):
+    async def add_new_url_and_link(self, link: str, url: str):
         async with self.lock:
             self.link_dict[link] = url
             links=self.url_dict.get(url, set())
@@ -82,6 +86,30 @@ class InMemoryURLMapRepository(URLMapRepository):
             all_entries = [{"link":link, "url":url, "id":"", "created":"" } for link, url in self.link_dict.items()]
         return all_entries
 
+    async def update_url_for_link(self, link: str, url: str):
+        async with self.lock:
+            old_url = self.link_dict.pop(link, None)
+            if old_url == url:
+                return
+            # update new url
+            self.link_dict[link] = url
+            # remove link from old url    
+            links=self.url_dict.get(old_url, set())
+            links.discard(link)
+            if links:
+                self.url_dict[url] = links
+            else:
+                self.url_dict.pop(url, None)
+            # track link for new url
+            links=self.url_dict.get(url, set())
+            links.add(link)
+            self.url_dict[url] = links
+
+                
+
+
+
+
 
 
 class DatabaseURlMapRepository(URLMapRepository):
@@ -103,7 +131,7 @@ class DatabaseURlMapRepository(URLMapRepository):
         url_maps = await self.db.get_url_maps_for_url(url=url)
         return {url_map.link for url_map in url_maps}
 
-    async def store_url_and_link(self, link: str, url: str):
+    async def add_new_url_and_link(self, link: str, url: str):
         await self.db.insert_url_map(url=url, link=link)
 
     async def delete_link(self, link: str):
@@ -111,10 +139,14 @@ class DatabaseURlMapRepository(URLMapRepository):
 
     async def list_all(self, link: str|None=None, url: str|None =None) -> list[dict]:
         results=await self.db.list_url_maps(url=url, link=link)
-        return [{"link": result.link, "url": result.url, "id": "", "created": result.created_at} for result in results]
+        return [{"link": result.link, "url": result.url,  "created": result.created_at} for result in results]
 
     async def init_repo(self):
         await self.db.init_models()
+
+    async def update_url_for_link(self, link: str, url: str):
+        await self.db.update_url_for_link(link=link, url=url)
+
 
 
 #TOODO: allow this to be configurable

@@ -1,8 +1,8 @@
 import re
 from typing import Annotated
 from pydantic import (
-    BaseModel, Field, 
-    AfterValidator, BeforeValidator, 
+    BaseModel, Field,
+    AfterValidator, BeforeValidator,
     AnyHttpUrl)
 
 # Regex to enforce alphanumeric characters, hyphens, and underscores only.
@@ -34,19 +34,40 @@ LinkPath = Annotated[str, BeforeValidator(
     remove_whitespace), AfterValidator(validate_short_path)]
 
 
+# class UrlMapCreateRequestNoLink(BaseModel):
+#     """Schema for creating a shortened URL entry."""
+
+#     original_url: AnyHttpUrl = Field(alias="url")
+
 class UrlMapCreateRequest(BaseModel):
     """Schema for creating a shortened URL entry."""
 
-    original_url: AnyHttpUrl = Field(alias="url")
-    link: LinkPath 
+    url: AnyHttpUrl
+    link: LinkPath
 
-class UrlMapCreateRequestNoLink(BaseModel):
-    """Schema for creating a shortened URL entry."""
-
-    original_url: AnyHttpUrl = Field(alias="url")
 
 class UrlMapCreateResponse(BaseModel):
     """ schema UrlCreateResponse    """
-    url:str
-    link: str|None = Field(default=None)
+    url: str
+    link: str | None = Field(default=None)
+    detail: str
+
+
+class UrlMapDeleteResponse(BaseModel):
+    """Schema for creating a shortened URL entry."""
+
+    link: LinkPath
+    detail: str
+
+
+class UrlMapUpdateRequest(BaseModel):
+    """Schema for creating a shortened URL entry."""
+
+    url: AnyHttpUrl
+
+
+class UrlMapUpdateResponse(BaseModel):
+    """ schema UrlCreateResponse    """
+    link: str | None = Field(default=None)
+    url: str
     detail: str

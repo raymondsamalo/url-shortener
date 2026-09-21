@@ -1,4 +1,6 @@
 from app.schemas.url import (
-    UrlMapCreateRequest, UrlMapCreateResponse, UrlMapCreateRequestNoLink,
-    LinkPath
+    LinkPath, 
+    UrlMapCreateRequest, UrlMapCreateResponse, 
+    UrlMapUpdateRequest, UrlMapUpdateResponse,
+    UrlMapDeleteResponse
 )
