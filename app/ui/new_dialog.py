@@ -17,7 +17,7 @@ class NewLinkDialog(Dialog):
         self.action_title = "Save"
 
     def setup(self, form):
-        form.link_input = ui.input(label='Short Link').classes('w-20')
+        form.link_input = ui.input(label='Short Link').classes('w-100')
         form.url_input = ui.input(label='URL').classes('w-100')
 
     def reset(self, form):

@@ -52,7 +52,6 @@ class Dialog(ABC):
         """
         show dialog
         """
-        print("SHOW")
         with ui.dialog() as dialog, ui.card().classes('w-120'):
             ui.label(self.title).classes('text-lg font-bold')
             self.setup(self.form)
