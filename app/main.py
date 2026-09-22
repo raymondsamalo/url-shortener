@@ -18,5 +18,5 @@ async def lifespan(app: FastAPI):
 fastapi_app = FastAPI(lifespan=lifespan)
 # we use router here to allow modular backends for our api
 
-ui.run_with(fastapi_app, mount_path="/ui", root=main_ui.main_page)
+ui.run_with(fastapi_app, mount_path="/ui", root=main_ui.main_page, title="URl-Shortener")
 fastapi_app.include_router(backend.router)
