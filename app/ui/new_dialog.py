@@ -1,9 +1,9 @@
 from typing import Awaitable, Callable, cast
+from types import SimpleNamespace
 
 from pydantic import AnyHttpUrl, ValidationError
 from nicegui import ui
 from app.schemas.url import UrlMapCreateRequest
-from types import SimpleNamespace
 
 from app.ui.dialog import Dialog, DialogError
 

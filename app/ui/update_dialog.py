@@ -1,9 +1,10 @@
 from typing import Awaitable, Callable, cast
+from types import SimpleNamespace
 
 from pydantic import AnyHttpUrl, ValidationError
 from nicegui import ui
+
 from app.schemas.url import UrlMapUpdateRequest
-from types import SimpleNamespace
 
 from app.ui.dialog import Dialog, DialogError
 
@@ -18,7 +19,7 @@ class EditLinkDialog(Dialog):
         self.url_value = ""
         self.link_value=""
 
-    def set_previous_value(self, url:str, link:str):
+    def set_values(self, url:str, link:str):
         self.url_value = url
         self.link_value = link
 
