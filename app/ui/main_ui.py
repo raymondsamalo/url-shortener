@@ -1,6 +1,9 @@
 from nicegui import APIRouter, ui
+from sqlalchemy import exc
 from app.dependencies import repo
-from app.ui.new_dialog import create_new_dialog
+from app.ui.new_dialog import DialogError, NewLinkDialog
+from app.util.logger import get_module_logger
+logger = get_module_logger(__name__)
 async def load_data(hostname):
     rows = await repo.list_all()
     print(rows)
@@ -29,20 +32,30 @@ async def main_page():
     async def refresh_data():
             table.rows = await load_data(hostname=hostname)
             ui.notify('Data refreshed!')
-    async def new_data(link_input, url_input):
-        # try:
-        print("add ", link_input, url_input)
-        await repo.add_new_url_and_link(link=link_input, url=url_input)
-        table.rows = await load_data(hostname=hostname)
-        ui.notify(f'{link_input} created')
+    async def new_data(form)->DialogError|None:
+        link_input = form.link_input.value
+        url_input  = form.url_input.value
+        try:
+            await repo.add_new_url_and_link(link=link_input, url=url_input)
+            table.rows = await load_data(hostname=hostname)
+            ui.notify(f'{link_input} created')
+        except exc.IntegrityError as e:
+            logger.exception(e)
+            return DialogError("Link already existed")
+        except exc.OperationalError as e:
+            logger.exception(e)
+            return DialogError("Database error, please retry")
+        except exc.SQLAlchemyError as e:
+            logger.exception(e)
+            return DialogError("Unknown Database error, please retry")
 
     with ui.header().classes('bg-blue-500 text-white p-4 items-center'):
         ui.label('Url Shortener').classes('text-h6')
         ui.space()
         ui.button(icon="sync", on_click=refresh_data).classes('q-mt-md').props('flat dense color=white')
         ui.button(icon="settings", on_click=lambda: ui.navigate.to('../docs')).classes('q-mt-md').props('flat dense color=white')
-    new_dialog = await create_new_dialog(new_data)
-    ui.button('Add', on_click=new_dialog.open).props('fab icon=add').classes('fixed bottom-4 right-4')
+    new_dialog = NewLinkDialog(new_data) 
+    ui.button('Add', on_click=new_dialog.show).props('fab icon=add').classes('fixed bottom-4 right-4')
 
 
 

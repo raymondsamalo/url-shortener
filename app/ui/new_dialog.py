@@ -1,53 +1,55 @@
-from typing import cast
+from typing import Awaitable, Callable, cast
 
 from pydantic import AnyHttpUrl, ValidationError
 from nicegui import ui
 from app.schemas.url import UrlMapCreateRequest
+from types import SimpleNamespace
 
-async def create_new_dialog(save_row_callback=None):
-    with ui.dialog() as dialog, ui.card().classes('w-80'):
-        ui.label('Add New Link').classes('text-lg font-bold')
+from app.ui.dialog import Dialog, DialogError
 
-        # Input fields to capture user data
-        url_input = ui.input(label='URL')
-        link_input = ui.input(label='Short Link')
+class NewLinkDialog(Dialog):
+    """
+    Dialog for adding new mapping between url and short link
+    """
+    def __init__(self, async_callback:Callable[[SimpleNamespace], Awaitable[DialogError|None]]|None = None) -> None:
+        super().__init__(async_callback=async_callback)
+        self.title = "New Link"
+        self.action_title = "Save"
 
-        with ui.row().classes('justify-end w-full'):
-            ui.button('Cancel', on_click=dialog.close).props('flat')
+    def setup(self, form):
+        form.url_input = ui.input(label='URL').classes('w-100')
+        form.link_input = ui.input(label='Short Link').classes('w-20')
 
-            # Save button triggers row insertion
-            async def save_row():
-                link_input.props(remove='error :error-message')
-                url_input.props(remove='error :error-message')
-                if link_input.value and url_input.value:
-                    try:
-                        validated_data = UrlMapCreateRequest(
-                            url=cast(AnyHttpUrl, url_input.value),
-                            link=cast(str, link_input.value),
-                        )
-                        del validated_data
+    def reset(self, form):
+        form.url_input.value = ''
+        form.link_input.value = ''
 
-                        # Add a new dictionary structure matching your columns
-                        if save_row_callback:
-                            print("has callback")
-                            await save_row_callback(link_input.value, url_input.value)
-                        # Clear fields and close the modal
-                        link_input.value = ''
-                        url_input.value = ''
-                        dialog.close()
-                    except ValidationError as e:
-                        # Loop through Pydantic's structural error format
-                        for error in e.errors():
-                            field_name = error['loc'][0]
-                            error_msg = error['msg']
-                            
-                            # Highlight the correct field in NiceGUI
-                            if field_name == 'link':
-                                link_input.props(f'error error-message="{error_msg}"')
-                            elif field_name == 'url':
-                                url_input.props(f'error error-message="{error_msg}"')
-                else:
-                    ui.notify('Please fill out all fields', type='warning')
+    async def validate(self, form) -> bool:
+        # ensure all fields are filled in
+        form.link_input.props(remove='error :error-message')
+        form.url_input.props(remove='error :error-message')
+        if not form.link_input.value or not form.url_input.value:
+            self.notify_warning('Please fill out all fields')
+            return False
+        # validate our fields
+        try:
+            validated_data = UrlMapCreateRequest(
+                url=cast(AnyHttpUrl, form.url_input.value),
+                link=cast(str, form.link_input.value),
+            )
+            del validated_data
+            return True
+        except ValidationError as e:
+            # Loop through Pydantic's structural error format
+            for error in e.errors():
+                field_name = error['loc'][0]
+                error_msg = error['msg']
+                
+                # Highlight the correct field in NiceGUI
+                if field_name == 'link':
+                    form.link_input.props(f'error error-message="{error_msg}"')
+                elif field_name == 'url':
+                    form.url_input.props(f'error error-message="{error_msg}"')
+            return False
 
-            ui.button('Save', on_click=save_row)
-        return dialog
+
